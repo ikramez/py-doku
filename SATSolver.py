@@ -1,57 +1,105 @@
-# sudokus = "4x4.txt"
-# sudoku_rules = "sudoku-rules.txt"
+from copy import copy, deepcopy
+import time
+from sys import stdin
 
-import copy
-
-
-
-def parse(cnf, file):
+def parse(file):
+    cnf = list()
     cnf.append(list())
     for line in file:
         tokens = line.split()
         if len(tokens) != 0 and tokens[0] not in ("p", "c"):
             for tok in tokens:
                 lit = int(tok)
-                maxvar = max(maxvar, abs(lit))
-            if lit == 0: cnf.append(list())
-            else: cnf[-1].append(lit)
+                if lit == 0:
+                    cnf.append(list())
+                else:
+                    cnf[-1].append(lit)
+    cnf.pop()
     return cnf
 
-    assert len(cnf[-1]) == 0
-    cnf.pop()
-    print(cnf)
-    print(maxvar)
+# When iterating, use a new variable.
+# So, the following is wrong:
+# def f(x):
+# a = [1, 2, 3]
+# for x in a:
 
-def assignLit(cnf, lit):
+def assignLit(cnf, literal):
     for clause in copy(cnf):
-        for lit in clause:
-            if lit in clause: cnf.remove(clause)
-            if -lit in clause: clause.remove(lit)
+        if literal in clause:
+            cnf.remove(clause)
+            if literal > 0:
+                vars.append(literal)
+        if -literal in clause:
+            clause.remove(-literal)
+    return cnf
+
+def unitClauseRemoval(cnf):
+  for clause in cnf:
+      if len(clause) == 1:
+          return clause[0]
+  return 0
+
+
+def pureLit(cnf):
+    positive = []
+    negative = []
+    for clause in cnf:
+        for literal in clause:
+            if literal > 0:
+                positive.append(literal)
+            else:
+                negative.append(literal)
+    pureLiterals = []
+    for clause in cnf:
+        for literal in clause:
+            if literal in positive and -literal not in negative:
+                pureLiterals.append(literal)
+            elif literal in negative and -literal not in positive:
+                pureLiterals.append(literal)
+    for literal in pureLiterals:
+        cnf = assignLit(cnf, literal)
+    #for literal in positive:
+      #if -literal not in negative:
+        #pureLiterals.append(literal)
+    #for literal in negative:
+      #if -literal not in positive:
+        #pureLiterals.append(literal)
+    #for literal in pureLiterals:
+        #cnf = assignLit(cnf, literal)
     return cnf
 
 def DPLL(cnf):
-    # Test if no unsatisfied clauses remain
-    if len(cnf) == 0: return True
-    # Test for presense of empty clause
-    if [] in cnf: return False
+    literal = unitClauseRemoval(cnf)
+    while (literal != 0):
+        cnf = assignLit(cnf, literal)
+        literal = unitClauseRemoval(cnf)
+    cnf = pureLit(cnf)
+    if len(cnf) == 0: # Check if all clauses are satisfied
+        return True
+    if [] in cnf: # Check for presence of empty clause
+        return False
     cnf = deepcopy(cnf)
-    return DPLL(assignLit(cnf, lit)) or DPLL(assignLit(cnf, lit))
+    literal = cnf[0][0]
+    return DPLL(assignLit(cnf, literal)) or DPLL(assignLit(cnf, -literal))
 
-
-
+#not negated true in list, can use list, dictionary, during parse
 
 def main():
-    sudokus = "4x4.txt"
-    # sudoku_rules = "sudoku-rules.txt"
-    # cnf = parse([], sudoku_rules)
-    cnf = parse([], sudokus)
-    DPLL(cnf)
+    sudoku = open("sudoku-example.txt", "r")
+    rules = open("sudoku-rules.txt", "r")
+    sudoku_cnf = parse(sudoku)
+    rules_cnf = parse(rules)
+    sudoku_cnf.extend(rules_cnf)
+    start_time = time.time()
+    satisfied = DPLL(sudoku_cnf)
+    if satisfied:
+        print("Satisfiable")
+    if not satisfied:
+        print("Unsatisfiable")
+    print("--- %s seconds ---" % (time.time() - start_time))
 
-
+vars = []
 main()
-
-
-
-
-
+vars = set(vars)
+print(vars)
 
