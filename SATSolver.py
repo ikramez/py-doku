@@ -17,11 +17,7 @@ def parse(file):
     cnf.pop()
     return cnf
 
-# When iterating, use a new variable.
-# So, the following is wrong:
-# def f(x):
-# a = [1, 2, 3]
-# for x in a:
+
 
 def assignLit(cnf, literal):
     for clause in copy(cnf):
@@ -82,7 +78,6 @@ def DPLL(cnf):
     literal = cnf[0][0]
     return DPLL(assignLit(cnf, literal)) or DPLL(assignLit(cnf, -literal))
 
-#not negated true in list, can use list, dictionary, during parse
 
 def main():
     sudoku = open("sudoku-example.txt", "r")
